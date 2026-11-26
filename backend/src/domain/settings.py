@@ -26,18 +26,27 @@ SETTINGS = [
     {"key": "screening_mpa", "label": "优先实测筛查线（MPa）", "default": 4.2,
      "min": 0.1, "max": 30, "step": 0.1},
 ]
+PAIR_COLUMNS = ("id", "batch_id", "split", "instrument", *FEATURES, TARGET)
+CONVERSION_SETTINGS = [
+    {"key": "max_hops", "label": "接力跳数上限", "default": 2, "min": 1, "max": 4, "step": 1},
+    {"key": "error_mpa", "label": "约定验收误差线（MPa）", "default": 0.30, "min": 0.01, "max": 5, "step": 0.01},
+]
 SPEC = {
     "columns": list(COLUMNS),
+    "paired_columns": list(PAIR_COLUMNS),
     "fields": FIELDS,
     "settings": SETTINGS,
+    "conversion_settings": CONVERSION_SETTINGS,
     "modules": {
         "datasets": "试条测量台账",
         "runs": "潜变量校准",
         "results": "批次留出结果",
         "reviews": "工坊实测交接",
+        "handoffs": "仪器换算交接",
     },
     "limitation": "抗折估计用于安排破坏性实测。新批超出校准范围时优先实测，放行仍依据实测。",
     "dataset_name": "20261125-再生石膏板试条.csv",
+    "paired_dataset_name": "20261126-双机对照.csv",
     "recommendation": "先复核独立批误差，再领取待测试条清单，优先实测越界或低于筛查线的试条。",
 }
 

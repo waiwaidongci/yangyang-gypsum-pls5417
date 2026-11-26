@@ -1,14 +1,20 @@
 """Domain entry points used by the catalog, seed script and background worker."""
 
+from .conversion import analyze_conversion, merge_pair_rows, parse_conversion_settings
 from .evaluation import holdout_diagnostics, pending_queue, trace_prediction
-from .fixtures import demo_rows
+from .fixtures import demo_pairs, demo_rows
+from .instruments import frozen_model_from_result, normalize_pairs
 from .pls import fit_path
 from .records import normalize_rows, predictors, strengths
 from .reports import calibration_tables, handoff_tables, selection_tables
 from .selection import select_components
 from .settings import SPEC, parse_settings
 
-__all__ = ["SPEC", "demo_rows", "normalize_rows", "analyze"]
+__all__ = [
+    "SPEC", "demo_rows", "demo_pairs", "analyze", "analyze_conversion",
+    "normalize_rows", "normalize_pairs", "merge_pair_rows", "parse_settings",
+    "parse_conversion_settings", "frozen_model_from_result",
+]
 
 
 def analyze(rows: list[dict], settings: dict) -> dict:

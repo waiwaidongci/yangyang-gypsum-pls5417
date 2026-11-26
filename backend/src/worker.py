@@ -4,7 +4,7 @@ import time
 from redis import RedisError
 
 from src.config.settings import ARTIFACT_DIR
-from src.services.execution import claim, execute, recover_jobs
+from src.services.execution import claim, claim_handoff, execute, recover_jobs
 from src.services.queue import QUEUE_KEY, redis_client
 
 
@@ -18,7 +18,7 @@ def worker():
     recover_jobs()
     while True:
         heartbeat()
-        job = claim()
+        job = claim_handoff() or claim()
         if job is not None:
             execute(job)
             continue

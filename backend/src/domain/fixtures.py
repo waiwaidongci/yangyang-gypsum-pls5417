@@ -2,7 +2,9 @@
 
 from random import Random
 
-from .settings import COLUMNS
+import numpy as np
+
+from .settings import COLUMNS, FEATURES, PAIR_COLUMNS, TARGET
 
 SEED = 26112592
 
@@ -14,6 +16,13 @@ CHANNELS = (
     (0.36, 0.041, -0.013, 0.029),
     (0.73, 0.110, -0.043, 0.019),
     (0.47, 0.060, -0.012, 0.047),
+)
+NIR_FEATURES = tuple(field for field in FEATURES if field.startswith("nir_"))
+# (gain, offset) applied by each replacement instrument to the anchor readings.
+INSTRUMENTS = (
+    ("NIR-01", (1.0,) * 6, (0.0,) * 6),
+    ("NIR-02", (1.05, 0.97, 1.03, 0.99, 1.06, 0.95), (0.01, -0.02, 0.005, -0.015, 0.02, -0.005)),
+    ("NIR-03", (0.98, 1.04, 0.99, 1.01, 0.96, 1.05), (-0.01, 0.015, -0.005, 0.01, -0.02, 0.005)),
 )
 
 
@@ -44,4 +53,22 @@ def demo_rows() -> list[dict]:
                 values = (f"{batch_id}-{strip:02d}", batch_id, split, *spectrum, density, thickness,
                           None if split == "pending" else measured)
                 rows.append(dict(zip(COLUMNS, values)))
+    return rows
+
+
+def demo_pairs() -> list[dict]:
+    """Triplicate every demo strip on the anchor and two replacement instruments."""
+
+    rng = np.random.default_rng(SEED)
+    rows = []
+    for base in demo_rows():
+        anchor = np.array([base[field] for field in NIR_FEATURES], dtype=float)
+        for instrument, gains, offsets in INSTRUMENTS:
+            readings = np.array(gains) * anchor + np.array(offsets)
+            if instrument != "NIR-01":
+                readings = readings + rng.normal(0, 1e-4, len(readings))
+            values = (base["id"], base["batch_id"], base["split"], instrument,
+                      *(round(float(value), 6) for value in readings),
+                      base["density_kg_m3"], base["thickness_mm"], base[TARGET])
+            rows.append(dict(zip(PAIR_COLUMNS, values)))
     return rows

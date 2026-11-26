@@ -4,16 +4,20 @@ import logging
 from sqlalchemy import select, update
 
 from src.config.database import Session
-from src.constants.workflow import RunStatus
+from src.constants.workflow import HandoffStatus, RunStatus
 from src.domain.project import analyze
 from src.models.dataset import Dataset
+from src.models.handoff import Handoff
 from src.models.run import Run
 from src.services.audit import record
+from src.services.handoffs import claim_handoffs, execute_handoff
 
 
 def recover_jobs():
     with Session.begin() as session:
         session.execute(update(Run).where(Run.status == RunStatus.RUNNING).values(status=RunStatus.QUEUED))
+        session.execute(update(Handoff).where(Handoff.status == HandoffStatus.RUNNING)
+                        .values(status=HandoffStatus.QUEUED))
 
 
 def claim():
@@ -25,11 +29,21 @@ def claim():
         run.status = RunStatus.RUNNING
         dataset = session.get(Dataset, run.dataset_id)
         record(session, 'run.started', run.id)
-        return run.id, dataset.rows, run.settings
+        return 'run', run.id, dataset.rows, run.settings
+
+
+def claim_handoff():
+    with Session.begin() as session:
+        job = claim_handoffs(session)
+        return None if job is None else ('handoff', job)
 
 
 def execute(job):
-    run_id, rows, settings = job
+    kind, *payload = job
+    if kind == 'handoff':
+        execute_handoff(payload[0])
+        return
+    run_id, rows, settings = payload
     result = None
     error_message = None
     try:

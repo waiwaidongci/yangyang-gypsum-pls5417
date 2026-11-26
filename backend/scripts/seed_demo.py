@@ -5,10 +5,12 @@ from sqlalchemy import func, select
 from migrations.bootstrap import bootstrap
 from src.config.database import Session
 from src.constants.workflow import Role
-from src.domain.project import SPEC, demo_rows
+from src.domain.project import SPEC, demo_pairs, demo_rows
 from src.models.account import Account
 from src.models.dataset import Dataset
+from src.models.paired_dataset import PairedDataset
 from src.services.catalog import add_dataset
+from src.services.paired_catalog import add_dataset as add_paired_dataset
 from src.utils.security import hash_password
 
 
@@ -28,9 +30,15 @@ def seed():
         dataset = session.scalar(select(Dataset).where(Dataset.name == name))
         if not dataset:
             dataset = add_dataset(session, name, demo_rows(), owner)
+        paired_name = SPEC['paired_dataset_name']
+        paired = session.scalar(select(PairedDataset).where(PairedDataset.name == paired_name))
+        if not paired:
+            paired = add_paired_dataset(session, paired_name, demo_pairs(), owner)
         return {'accounts': session.scalar(select(func.count()).select_from(Account)),
                 'datasets': session.scalar(select(func.count()).select_from(Dataset)),
-                'demo_rows': len(dataset.rows), 'checksum': dataset.checksum}
+                'paired_datasets': session.scalar(select(func.count()).select_from(PairedDataset)),
+                'demo_rows': len(dataset.rows), 'checksum': dataset.checksum,
+                'paired_rows': len(paired.rows), 'paired_checksum': paired.checksum}
 
 
 if __name__ == '__main__':

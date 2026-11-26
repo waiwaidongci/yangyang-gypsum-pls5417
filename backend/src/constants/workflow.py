@@ -17,3 +17,10 @@ class RunStatus(StrEnum):
 class Decision(StrEnum):
     APPROVED = 'approved'
     REJECTED = 'rejected'
+
+
+class HandoffStatus(StrEnum):
+    QUEUED = 'queued'
+    RUNNING = 'running'
+    COMPLETED = 'completed'
+    FAILED = 'failed'
